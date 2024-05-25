@@ -29,14 +29,16 @@ const MazeBlock: React.FC<MazeBlock> = ({ maze }) => {
   const [startPosition, setStartPosition] = useState<Position>({ row: startRow, col: startCol });
   const [currentPosition, setCurrentPosition] = useState<Position>({ row: startRow, col: startCol });
   const [visited, setVisited] = useState<Position[]>([]);
+  const [previousDirection, setPreviousDirection] = useState<{ row: number; col: number } | null>(null);
 
   const isCurrent = (row: number, col: number) => row === currentPosition.row && col === currentPosition.col
   const isVisited = (row: number, col: number) => visited.some(pos => pos.row === row && pos.col === col);
-  
+  const isInPath = (row: number, col: number) => path.some(pos => pos.row === row && pos.col === col);
+
   useEffect(() => {
     if (isSolving && currentPosition) {
       const timer = setTimeout(() => {
-        moveMouse();
+        moveRat();
       }, MOVING_SPEED);
 
       return () => clearTimeout(timer);
@@ -46,22 +48,29 @@ const MazeBlock: React.FC<MazeBlock> = ({ maze }) => {
 
 
 
-  const moveMouse = () => {
-    if (!currentPosition) return;
+  const moveRat = () => {
     const { row, col } = currentPosition;
-    
-    if (maze[row][col] === 'end') {
-      setIsSolving(false);
-      return;
-    }
-
     const directions = [
       { row: -1, col: 0 }, // 上
       { row: 1, col: 0 },  // 下
       { row: 0, col: -1 }, // 左
       { row: 0, col: 1 },  // 右
     ];
+    const newPath = [...path];
 
+    if (!currentPosition) {
+      return;
+    }
+
+    if (maze[row][col] === 'end') {
+      return;
+    }
+
+    if (previousDirection) {
+      // 將上一次的方向放到第一個
+      directions.unshift(previousDirection);
+    }
+  
     for (const dir of directions) {
       const newRow = row + dir.row;
       const newCol = col + dir.col;
@@ -72,16 +81,18 @@ const MazeBlock: React.FC<MazeBlock> = ({ maze }) => {
         newCol >= 0 &&
         newCol < maze[0].length &&
         maze[newRow][newCol] !== 'wall' &&
-        !visited.some(pos => pos.row === newRow && pos.col === newCol)
+        !isVisited(newRow, newCol)
       ) {
+        // 代表可以走
         setVisited(prevVisited => [...prevVisited, { row: newRow, col: newCol }]);
         setCurrentPosition({ row: newRow, col: newCol });
         setPath(prevPath => [...prevPath, { row: newRow, col: newCol }]);
+        setPreviousDirection(dir);
         return;
       }
     }
 
-    const newPath = [...path];
+    // 不能走後退一格
     newPath.pop();
     setPath(newPath);
     setCurrentPosition(newPath[newPath.length - 1]);
@@ -90,7 +101,6 @@ const MazeBlock: React.FC<MazeBlock> = ({ maze }) => {
   const handleStart = () => {
       const {row: startRow, col: startCol } = startPosition
       setIsSolving(true);
-      setCurrentPosition({ row: startRow, col: startCol });
       setPath([{ row: startRow, col: startCol }]);
       setVisited([{ row: startRow, col: startCol }]);
     
@@ -102,7 +112,7 @@ const MazeBlock: React.FC<MazeBlock> = ({ maze }) => {
     setCurrentPosition({ row: startRow, col: startCol });
     setPath([]);
     setVisited([]);
-    
+    setPreviousDirection(null);
   };
 
   return (
@@ -115,11 +125,11 @@ const MazeBlock: React.FC<MazeBlock> = ({ maze }) => {
               <React.Fragment
                 key={`${rowIndex}-${colIndex}`}
               >
-                {isCurrent(rowIndex, colIndex) && <LuRat className='w-4 h-4 text-neutral-500 bg-amber-200'/>}
-                {isVisited(rowIndex, colIndex) && !isCurrent(rowIndex, colIndex) && <div className='bg-amber-200 w-4 h-4'></div>}
-                {cell === 'end' && !isCurrent(rowIndex, colIndex) && <FaCheese className='w-4 h-4 text-amber-400'/>}
-                {cell === 'wall' && <div className='bg-green-800 w-4 h-4'></div>}
-                {cell === 'path' && !isCurrent(rowIndex, colIndex) && !isVisited(rowIndex, colIndex) && <div className='bg-lime-50 w-4 h-4'></div>}
+                {isCurrent(rowIndex, colIndex) && <LuRat className='w-4 h-4 text-neutral-500 bg-amber-200' />}
+                {isInPath(rowIndex, colIndex) && !isCurrent(rowIndex, colIndex) && <div className='bg-amber-200 w-4 h-4' />}
+                {cell === 'path' && !isCurrent(rowIndex, colIndex) && !isInPath(rowIndex, colIndex) && <div className='bg-lime-50 w-4 h-4' />}
+                {cell === 'end' && !isCurrent(rowIndex, colIndex) && <FaCheese className='w-4 h-4 text-amber-400' />}
+                {cell === 'wall' && <div className='bg-green-800 w-4 h-4' />}
               </React.Fragment>
             ))
           }
@@ -142,7 +152,6 @@ const FindTheCheese: React.FC<MazeProps> = ({ mazeData }) => (
       <React.Fragment key={index}>
         <MazeBlock maze={maze} />
       </React.Fragment>
-
     ))}
   </div>
 );
