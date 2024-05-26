@@ -103,7 +103,6 @@ const MazeBlock: React.FC<MazeBlock> = ({ maze }) => {
       setIsSolving(true);
       setPath([{ row: startRow, col: startCol }]);
       setVisited([{ row: startRow, col: startCol }]);
-    
   };
 
   const handleReset = () => {
