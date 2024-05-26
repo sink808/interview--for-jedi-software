@@ -1,12 +1,12 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from "react";
 
-const SCROLL_DELAY = 300
+const SCROLL_DELAY = 300;
 
 const Header: React.FC = () => {
   const [visible, setVisible] = useState(true);
   const timeoutIdRef = useRef<NodeJS.Timeout | null>(null);
-  const visibleClassName =  'translate-y-0'
-  const hiddenClassName =  '-translate-y-full'
+  const visibleClassName = "translate-y-0";
+  const hiddenClassName = "-translate-y-full";
 
   useEffect(() => {
     const handleScroll = () => {
@@ -21,9 +21,9 @@ const Header: React.FC = () => {
       }, SCROLL_DELAY);
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
     return () => {
-      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener("scroll", handleScroll);
       if (timeoutIdRef.current) {
         clearTimeout(timeoutIdRef.current);
       }
@@ -31,7 +31,9 @@ const Header: React.FC = () => {
   }, []);
 
   return (
-    <header className={`fixed top-0 z-50 text-2xl font-bold text-center p-4 bg-white w-full drop-shadow transition ease-in-out duration-300 ${visible ? visibleClassName : hiddenClassName}` }>
+    <header
+      className={`fixed top-0 z-50 text-2xl font-bold text-center p-4 bg-white w-full drop-shadow transition ease-in-out duration-300 ${visible ? visibleClassName : hiddenClassName}`}
+    >
       Jedi Software
     </header>
   );
