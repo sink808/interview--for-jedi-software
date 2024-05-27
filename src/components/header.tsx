@@ -4,8 +4,8 @@ import Link from "next/link";
 const SCROLL_DELAY = 300;
 
 const Header: React.FC = () => {
-  const [visible, setVisible] = useState(true);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const timeoutIdRef = useRef<NodeJS.Timeout | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -14,18 +14,18 @@ const Header: React.FC = () => {
   const visibleClassName = "translate-y-0";
   const hiddenClassName = "-translate-y-full";
 
-  const toggleMenu = () => setMenuOpen(!menuOpen);
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   useEffect(() => {
     const handleScroll = () => {
-      setVisible(false);
+      setIsVisible(false);
 
       if (timeoutIdRef.current) {
         clearTimeout(timeoutIdRef.current);
       }
 
       timeoutIdRef.current = setTimeout(() => {
-        setVisible(true);
+        setIsVisible(true);
       }, SCROLL_DELAY);
     };
 
@@ -47,7 +47,7 @@ const Header: React.FC = () => {
           !toggleMenuRef.current.contains(event.target as Node)); // toggle 另外處理
 
       if (isCollapseMenu) {
-        setMenuOpen(false);
+        setIsMenuOpen(false);
       }
     };
 
@@ -59,7 +59,7 @@ const Header: React.FC = () => {
 
   return (
     <header
-      className={`fixed top-0 z-50 text-2xl font-bold text-center bg-white w-full drop-shadow-xl transition ease-in-out duration-300 ${visible ? visibleClassName : hiddenClassName}`}
+      className={`fixed top-0 z-50 text-2xl font-bold text-center bg-white w-full drop-shadow-xl transition ease-in-out duration-300 ${isVisible ? visibleClassName : hiddenClassName}`}
     >
       <div className="p-4">
         <span>Jedi Software</span>
@@ -72,7 +72,7 @@ const Header: React.FC = () => {
         </button>
       </div>
 
-      {menuOpen && (
+      {isMenuOpen && (
         <div ref={menuRef} className="text-lg bg-gray-100 p-4 ">
           <Link href="/" className="px-8">
             Home

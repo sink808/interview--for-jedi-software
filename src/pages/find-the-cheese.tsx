@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { GetServerSideProps } from "next";
 import Head from "next/head";
 import axios from "axios";
@@ -19,26 +19,21 @@ interface Position {
   col: number;
 }
 
-const MOVING_SPEED = 150;
+const MOVING_SPEED = 100;
 
 const MazeBlock: React.FC<MazeBlock> = ({ maze }) => {
   const startRow = maze.findIndex((row) => row.includes("start"));
   const startCol = maze[startRow].indexOf("start");
-  const [isSolving, setIsSolving] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
   const [path, setPath] = useState<Position[]>([]);
-  const [startPosition, setStartPosition] = useState<Position>({
-    row: startRow,
-    col: startCol,
-  });
+  const [visited, setVisited] = useState<Position[]>([]);
   const [currentPosition, setCurrentPosition] = useState<Position>({
     row: startRow,
     col: startCol,
   });
-  const [visited, setVisited] = useState<Position[]>([]);
-  const [previousDirection, setPreviousDirection] = useState<{
-    row: number;
-    col: number;
-  } | null>(null);
+  const [previousDirection, setPreviousDirection] = useState<Position | null>(
+    null
+  );
 
   const isCurrent = (row: number, col: number) =>
     row === currentPosition.row && col === currentPosition.col;
@@ -46,17 +41,6 @@ const MazeBlock: React.FC<MazeBlock> = ({ maze }) => {
     visited.some((pos) => pos.row === row && pos.col === col);
   const isInPath = (row: number, col: number) =>
     path.some((pos) => pos.row === row && pos.col === col);
-
-  useEffect(() => {
-    if (isSolving && currentPosition) {
-      const timer = setTimeout(() => {
-        moveRat();
-      }, MOVING_SPEED);
-
-      return () => clearTimeout(timer);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSolving, currentPosition]);
 
   const moveRat = () => {
     const { row, col } = currentPosition;
@@ -68,11 +52,7 @@ const MazeBlock: React.FC<MazeBlock> = ({ maze }) => {
     ];
     const newPath = [...path];
 
-    if (!currentPosition) {
-      return;
-    }
-
-    if (maze[row][col] === "end") {
+    if (!currentPosition || maze[row][col] === "end") {
       return;
     }
 
@@ -111,24 +91,33 @@ const MazeBlock: React.FC<MazeBlock> = ({ maze }) => {
     setCurrentPosition(newPath[newPath.length - 1]);
   };
 
-  const handleStart = () => {
-    const { row: startRow, col: startCol } = startPosition;
-    setIsSolving(true);
+  const handleStart = useCallback(() => {
+    setIsStarting(true);
     setPath([{ row: startRow, col: startCol }]);
     setVisited([{ row: startRow, col: startCol }]);
-  };
+  }, [startRow, startCol]);
 
-  const handleReset = () => {
-    const { row: startRow, col: startCol } = startPosition;
-    setIsSolving(false);
+  const handleReset = useCallback(() => {
+    setIsStarting(false);
     setCurrentPosition({ row: startRow, col: startCol });
     setPath([]);
     setVisited([]);
     setPreviousDirection(null);
-  };
+  }, [startRow, startCol]);
+
+  useEffect(() => {
+    if (isStarting && currentPosition) {
+      const timer = setTimeout(() => {
+        moveRat();
+      }, MOVING_SPEED);
+
+      return () => clearTimeout(timer);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isStarting, currentPosition]);
 
   return (
-    <div className="w-fit mx-auto my-4 px-8 flex flex-col items-center border-b-2">
+    <div className="w-fit mx-auto my-4 px-8 flex flex-col items-center [&:not(:last-child)]:border-b-2">
       <div>
         {maze.map((row, rowIndex) => (
           <div key={rowIndex} className="flex">
@@ -156,29 +145,33 @@ const MazeBlock: React.FC<MazeBlock> = ({ maze }) => {
         ))}
       </div>
       <button
-        className="bg-yellow-500 w-40 h-6 rounded my-4"
-        onClick={isSolving ? handleReset : handleStart}
+        className="bg-amber-500 hover:bg-amber-400 w-40 h-6 rounded my-4"
+        onClick={isStarting ? handleReset : handleStart}
       >
-        {isSolving ? "Reset" : "Start"}
+        {isStarting ? "Reset" : "Start"}
       </button>
     </div>
   );
 };
 
 const FindTheCheese: React.FC<MazeProps> = ({ mazeData }) => (
-  <main>
-    <Head>
-      <title>Find the cheese</title>
-    </Head>
-    <h1 className="text-2xl font-bold text-center m-2">Find the cheese</h1>
-    <p className="text-center mx-2">
-      Click 'Start' to see how the mouse finds the cheese by using DFS!
-    </p>
-    {mazeData.map((maze, index) => (
-      <React.Fragment key={index}>
-        <MazeBlock maze={maze} />
-      </React.Fragment>
-    ))}
+  <main className="bg-amber-50 min-h-screen">
+    <div className="p-4">
+      <div className="p-4 max-w-[720px] mx-auto bg-white rounded shadow">
+        <Head>
+          <title>Find the cheese</title>
+        </Head>
+        <h1 className="text-2xl font-bold text-center m-2">Find the cheese</h1>
+        <p className="text-center mx-2">
+          Click 'Start' to see how the mouse finds the cheese by using DFS!
+        </p>
+        {mazeData.map((maze, index) => (
+          <React.Fragment key={index}>
+            <MazeBlock maze={maze} />
+          </React.Fragment>
+        ))}
+      </div>
+    </div>
   </main>
 );
 
