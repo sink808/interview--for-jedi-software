@@ -1,3 +1,3 @@
-## Frontend Engineer Assessment.
+## Find the cheese
 
-Check out the details of the assessment at home page of the project.
+Click 'Start' to see how the mouse finds the cheese by using DFS!
